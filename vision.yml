@@ -192,7 +192,7 @@
         update_cache: yes
 
     - name: "Install intel MKL libraries"
-      apt: name="intel-mkl-64bit-2017.3-056"
+      apt: name="intel-mkl-64bit"
 
     - name: "Add MKL library to ld.so.d path"
       copy:
@@ -324,8 +324,12 @@
   become: true
   tasks:
     - name: "Check that if usr local libopencv_core.so.3.1.0 exists"
-      stat: path=/usr/local/lib/libopencv_core.so.3.1.0
-      register: libopencv_file
+      shell: |
+        test -f /usr/local/lib/libopencv_core.so.3.1.0 && \
+        test -z "$(ldd /usr/local/lib/libopencv_imgcodecs.so | grep libgdal)"
+      register: opencv_check
+      failed_when: opencv_check.rc > 1
+      changed_when: opencv_check.rc == 1
 
     - name: "Remove ubuntu opencv"
       apt: name={{item}} state=absent
@@ -370,7 +374,7 @@
         - libopencv2.4-java
         - libopencv2.4-jni
         - opencv-data
-      when: not libopencv_file.stat.exists
+      when: opencv_check.rc == 1
 
     - name: "Install opencv prerequisite libraries"
       apt: name={{item}}
@@ -413,15 +417,14 @@
         - ant
         - default-jdk
         - doxygen
-      # when: not libopencv_file.stat.exists
 
     - name: "Erase temp build directory"
       file: path=/tmp/ansible-opencv-build state=absent
-      when: not libopencv_file.stat.exists
+      when: opencv_check.rc == 1
 
     - name: "Create temp build directory"
       file: path=/tmp/ansible-opencv-build state=directory
-      when: not libopencv_file.stat.exists
+      when: opencv_check.rc == 1
 
     - name: "Download opencv 3.1 sources"
       git:
@@ -429,7 +432,7 @@
         version: 3.1.0-with-cuda8
         depth: 1
         dest: /tmp/ansible-opencv-build
-      when: not libopencv_file.stat.exists
+      when: opencv_check.rc == 1
 
     - name: "Build and install opencv"
       shell: |
@@ -444,7 +447,7 @@
             -D WITH_OPENGL=ON \
             -D WITH_CUBLAS=ON \
             -D CUDA_NVCC_FLAGS="-D_FORCE_INLINES" \
-            -D WITH_GDAL=ON \
+            -D WITH_GDAL=OFF \
             -D WITH_XINE=ON \
             -D WITH_GSTREAMER=ON \
             -D BUILD_NEW_PYTHON_SUPPORT=ON \
@@ -459,7 +462,7 @@
         chdir: /tmp/ansible-opencv-build
       register: opencv_build
       failed_when: opencv_build.rc > 0
-      when: not libopencv_file.stat.exists
+      when: opencv_check.rc == 1
       notify: run ldconfig
 
     - name: "Verify installation"
@@ -516,6 +519,7 @@
       shell: |
         test -L /opt/caffe/bin/caffe && \
         test -f /opt/caffe/bin/caffe.bin && \
+        test -d /opt/caffe/matlab && \
         test "$(/opt/caffe/bin/caffe --version)" = "caffe version 1.0.0"
       register: caffe_check
       failed_when: caffe_check.rc > 1
@@ -547,8 +551,10 @@
       shell: |
         make clean
         make proto
-        make all -j12
+        make all matcaffe pycaffe -j12
         make distribute
+        rm -rf distribute/matlab
+        cp -r matlab distribute/matlab
         ls distribute/bin | \
           sed -n 's/\.bin$//p' | \
           xargs -n1 -I{} ln -s {}.bin distribute/bin/{}
