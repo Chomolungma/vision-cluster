@@ -33,5 +33,11 @@ fi
 
 # STEP 1: connect via sol activate
 echo "Escape key set to !.  To diconnect from the sesion press: [Enter]!."
-ssh -t holyoke-console ipmitool -I lanplus -U vision -f ${IPMIPASSFILE} \
-    -e '!' -H ${BMCNAME} sol activate
+if [ "$(hostname)" == "holyoke-console" ]
+then
+    ipmitool -I lanplus -U vision -f ${IPMIPASSFILE} \
+        -e '!' -H ${BMCNAME} sol activate
+else
+    ssh -t holyoke-console ipmitool -I lanplus -U vision -f ${IPMIPASSFILE} \
+        -e '!' -H ${BMCNAME} sol activate
+fi
