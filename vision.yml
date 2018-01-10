@@ -192,7 +192,7 @@
         update_cache: yes
 
     - name: "Install intel MKL libraries"
-      apt: name="intel-mkl-64bit"
+      apt: name="intel-mkl-64bit-2018.1-038"
 
     - name: "Add MKL library to ld.so.d path"
       copy:
