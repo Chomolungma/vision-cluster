@@ -75,6 +75,21 @@
         name:
           - "glances[gpu,web]"
 
+    - name: "Check if systemd is present"
+      shell: pidof systemd
+      register: check_systemd
+      failed_when: check_systemd.rc > 2
+
+    - name: "Autostart glances webserver"
+      copy:
+        dest: /etc/systemd/system/glances.service
+        src: files/glances/glances.service
+      when: check_systemd.rc == 0
+
+    - name: "Start glances service"
+      systemd: state=started enabled=yes name=glances
+      when: check_systemd.rc == 0
+
     - name: "Update apt cache and do a full dist upgrade"
       apt: update_cache=yes upgrade=dist cache_valid_time=3600
 
