@@ -83,7 +83,7 @@ then
 fi
 
 # STEP 5: run ansible
-if [ -z $(grep ${SHORTSERVER} hosts) ]
+if [ -z $(grep -Fxq ${SHORTSERVER} hosts) ]
 then
     echo "${SHORTSERVER} is not listed in hosts inventory."
     echo "Ansible will not run."
