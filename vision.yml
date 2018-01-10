@@ -334,6 +334,24 @@
         - Pillow
         - six
 
+- name: "Mongodb 3.6"
+  hosts: xenial
+  become: yes
+  tasks:
+    - name: "Add mongodb apt-key"
+      apt_key:
+        keyserver: keyserver.ubuntu.com
+        id: 2930ADAE8CAF5059EE73BB4B58712A2291FA4AD5
+
+    - name: "Add mongodb-3.6 apt repository"
+      apt_repository:
+        repo: "deb https://repo.mongodb.org/apt/ubuntu xenial/mongodb-org/3.6 multiverse"
+        filename: "mongodb-org-3.6"
+        update_cache: yes
+
+    - name: "Install intel MKL libraries"
+      apt: name="mongodb-org"
+
 - name: "Build opencv from source"
   hosts: gpu
   become: true
