@@ -278,6 +278,12 @@
   hosts: gpu
   become: yes
   tasks:
+    - name: "OS numpy should be absent"
+      apt: name={{item}} state=absent
+      with_items:
+        - python-numpy
+        - python-scipy
+
     - name: "Install recent numpy"
       pip: name=numpy version=1.13.1
     - name: "Install recent scipy"
