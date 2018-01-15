@@ -362,7 +362,7 @@
   hosts: gpu
   become: true
   tasks:
-    - name: "Check that if usr local libopencv_core.so.3.1.0 exists"
+    - name: "Check if usr local libopencv_core.so.3.1.0 exists"
       shell: |
         test -f /usr/local/lib/libopencv_core.so.3.1.0 && \
         test -z "$(ldd /usr/local/lib/libopencv_imgcodecs.so | grep libgdal)"
@@ -414,6 +414,18 @@
         - libopencv2.4-jni
         - opencv-data
       when: opencv_check.rc == 1
+
+    - name: "Check if libfaac0 is from ppa2"
+      shell: |
+        apt-cache policy libfaac0 | grep Installed
+      register: libfaac0_check
+      changed_when: '"ppa2" in libfaac0_check.stdout'
+
+    - name: "Resolve conflict with ppa:mc3man/trusty-media"
+      apt: name={{item}} state=absent
+      with_items:
+        - libfaac0
+      when: '"ppa2" in libfaac0_check.stdout'
 
     - name: "Install opencv prerequisite libraries"
       apt: name={{item}}
