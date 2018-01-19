@@ -361,6 +361,36 @@
     - name: "Install Mongodb package"
       apt: name="mongodb-org"
 
+- name: "Yarn and Nodejs"
+  hosts: gpu
+  become: yes
+  tasks:
+    - name: "Add NodeSource apt-key"
+      apt_key:
+        url: "https://deb.nodesource.com/gpgkey/nodesource.gpg.key"
+
+    - name: "Add NodeSource apt repository"
+      apt_repository:
+        repo: "deb https://deb.nodesource.com/node_8.x {{ansible_distribution_release}} main"
+        filename: "nodesource"
+        update_cache: yes
+
+    - name: "Add yarn apt-key"
+      apt_key:
+        url: "https://dl.yarnpkg.com/debian/pubkey.gpg"
+
+    - name: "Add Yarn repository"
+      apt_repository:
+        repo: "deb https://dl.yarnpkg.com/debian/ stable main"
+        filename: "yarn"
+        update_cache: yes
+
+    - name: "Install nodejs and yarn"
+      apt: name={{item}}
+      with_items:
+        - yarn
+        - nodejs
+
 - name: "Build opencv from source"
   hosts: gpu
   become: true
