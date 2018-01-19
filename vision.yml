@@ -207,7 +207,10 @@
         update_cache: yes
 
     - name: "Install intel MKL libraries"
-      apt: name="intel-mkl-64bit-2018.1-038"
+      apt: name={{item}}
+      with_items:
+        - "intel-mkl-2018.0-033"
+        - "intel-mkl-64bit-2018.1-038"
 
     - name: "Add MKL library to ld.so.d path"
       copy:
@@ -355,7 +358,7 @@
         filename: "mongodb-org-3.6"
         update_cache: yes
 
-    - name: "Install intel MKL libraries"
+    - name: "Install Mongodb package"
       apt: name="mongodb-org"
 
 - name: "Build opencv from source"
