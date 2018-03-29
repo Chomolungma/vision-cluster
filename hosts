@@ -23,7 +23,27 @@ visiongpu23
 visiongpu24
 visiongpu25
 
+[trusty]
+visiongpu02
+visiongpu03
+visiongpu04
+visiongpu06
+visiongpu07
+visiongpu08
+visiongpu09
+visiongpu11
+visiongpu12
+visiongpu13
+visiongpu14
+visiongpu15
+visiongpu16
+visiongpu18
+visiongpu19
+visiongpu20
+
 [xenial]
+visiongpu10
+visiongpu17
 visiongpu21
 visiongpu22
 visiongpu23
