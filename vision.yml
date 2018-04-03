@@ -69,6 +69,7 @@
         - parallel
         - lshw
         - gdisk
+        - nano
 
     - name: "Install glances"
       pip:
@@ -263,6 +264,11 @@
       apt: name=cuda-repo-ubuntu1404 state=absent
       when: '"9" not in cuda_check_deb.stdout'
 
+    - name: "Add nvidia apt-key"
+      apt_key:
+        url: "https://developer.download.nvidia.com/compute/cuda/repos/\
+              ubuntu1604/x86_64/7fa2af80.pub"
+
     - name: "Download CUDA repo deb"
       apt:
         deb: "https://developer.download.nvidia.com/compute/cuda/repos/\
@@ -426,6 +432,42 @@
       with_items:
         - yarn
         - nodejs
+
+- name: "Shared Anaconda 3 distribution"
+  hosts: gpu
+  become: true
+  vars:
+    anaconda_version: 4.3.0
+    anaconda_parent_dir: /opt/
+    anaconda3_path: "/opt/Anaconda3-{{ anaconda_version }}-Linux-x86_64"
+  pre_tasks:
+    - name: Check if Anaconda 3 is already installed
+      stat:
+        path: "{{ anaconda3_path }}"
+      register: anaconda3_installed
+      tags:
+        - anaconda-install
+  roles:
+    - role: andrewrothstein.anaconda
+      anaconda_python_ver : '3'
+      anaconda_ver: "{{ anaconda_version }}"
+      when: not anaconda3_installed.stat.exists
+      tags: anaconda-install
+  tasks: 
+    - name: "link anaconda..."
+      become: yes
+      become_user: root
+      file:
+        dest: /opt/anaconda
+        src: "{{ anaconda3_path }}"
+        state: link
+      tags:
+        - anaconda-install
+    - name: "Set up python 3.6"
+      become: yes
+      shell: "/opt/anaconda/bin/conda install -y -q python=3.6.2"
+      register: conda_env_update
+      changed_when: '"COMPLETE" in conda_env_update.stdout'
 
 - name: "Build opencv from source"
   hosts: gpu
@@ -594,42 +636,6 @@
     - name: run ldconfig
       command: ldconfig
 
-
-- name: "Shared Anaconda 3 distribution"
-  hosts: gpu
-  become: true
-  vars:
-    anaconda_version: 4.3.0
-    anaconda_parent_dir: /opt/
-    anaconda3_path: "/opt/Anaconda3-{{ anaconda_version }}-Linux-x86_64"
-  pre_tasks:
-    - name: Check if Anaconda 3 is already installed
-      stat:
-        path: "{{ anaconda3_path }}"
-      register: anaconda3_installed
-      tags:
-        - anaconda-install
-  roles:
-    - role: andrewrothstein.anaconda
-      anaconda_python_ver : '3'
-      anaconda_ver: "{{ anaconda_version }}"
-      when: not anaconda3_installed.stat.exists
-      tags: anaconda-install
-  tasks: 
-    - name: "link anaconda..."
-      become: yes
-      become_user: root
-      file:
-        dest: /opt/anaconda
-        src: "{{ anaconda3_path }}"
-        state: link
-      tags:
-        - anaconda-install
-    - name: "Set up python 3.6"
-      become: yes
-      shell: "/opt/anaconda/bin/conda install -y -q python=3.6.2"
-      register: conda_env_update
-      changed_when: '"COMPLETE" in conda_env_update.stdout'
 
 - name: "Build and install caffe-1.0 from source"
   hosts: gpu
