@@ -290,7 +290,7 @@
       when: '"9" not in cuda_check_deb.stdout'
 
 - name: "Nvidia CUDNN distribution"
-  hosts: gpu
+  hosts: trusty
   become: yes
   tasks:
     - name: "Check if CUDNN is present"
@@ -315,6 +315,29 @@
         - "/tmp/ansible-cudnn/libcudnn6-dev_6.0.21-1+cuda8.0_amd64.deb"
         - "/tmp/ansible-cudnn/libcudnn7_7.0.1.13-1+cuda8.0_amd64.deb"
         - "/tmp/ansible-cudnn/libcudnn7-dev_7.0.1.13-1+cuda8.0_amd64.deb"
+      when: cudnn_check_deb.rc == 1
+
+- name: "Nvidia CUDNN distribution"
+  hosts: xenial
+  become: yes
+  tasks:
+    - name: "Check if CUDNN is present"
+      command: dpkg-query -W libcudnn7-dev libcudnn7
+      register: cudnn_check_deb
+      failed_when: cudnn_check_deb.rc > 1
+      changed_when: cudnn_check_deb.rc == 1
+
+    - name: "Copy CUDNN deb files"
+      copy:
+        dest: /tmp/ansible-cudnn/
+        src: largefiles/cudnn/xenial/
+      when: cudnn_check_deb.rc == 1
+
+    - name: "Install CUDNN runtime deb files"
+      apt: deb={{item}}
+      with_items:
+        - "/tmp/ansible-cudnn/libcudnn7_7.1.2.21-1+cuda9.1_amd64.deb"
+        - "/tmp/ansible-cudnn/libcudnn7-dev_7.1.2.21-1+cuda9.1_amd64.deb"
       when: cudnn_check_deb.rc == 1
 
 - name: "python packages"
@@ -470,7 +493,7 @@
       changed_when: '"COMPLETE" in conda_env_update.stdout'
 
 - name: "Build opencv from source"
-  hosts: gpu
+  hosts: trusty
   become: true
   tasks:
     - name: "Check if usr local libopencv_core.so.3.1.0 exists"
@@ -629,6 +652,173 @@
 
     - name: "Verify installation"
       stat: path=/usr/local/lib/libopencv_core.so.3.1.0
+      register: libopencv_verify
+      failed_when: not libopencv_verify.stat.exists
+
+  handlers:
+    - name: run ldconfig
+      command: ldconfig
+
+- name: "Build opencv from source"
+  hosts: xenial
+  become: true
+  tasks:
+    - name: "Check if usr local libopencv_core.so.3.3.1 exists"
+      shell: |
+        test -f /usr/local/lib/libopencv_core.so.3.3.1 && \
+        test -z "$(ldd /usr/local/lib/libopencv_imgcodecs.so | grep libgdal)"
+      register: opencv_check
+      failed_when: opencv_check.rc > 1
+      changed_when: opencv_check.rc == 1
+
+    - name: "Remove ubuntu opencv"
+      apt: name={{item}} state=absent
+      with_items:
+        - libopencv-dev
+        - libopencv-calib3d-dev
+        - libopencv-calib3d2.4
+        - libopencv-contrib-dev
+        - libopencv-contrib2.4
+        - libopencv-core-dev
+        - libopencv-core2.4
+        - libopencv-features2d-dev
+        - libopencv-features2d2.4
+        - libopencv-flann-dev
+        - libopencv-flann2.4
+        - libopencv-gpu-dev
+        - libopencv-gpu2.4
+        - libopencv-highgui-dev
+        - libopencv-highgui2.4
+        - libopencv-imgproc-dev
+        - libopencv-imgproc2.4
+        - libopencv-legacy-dev
+        - libopencv-legacy2.4
+        - libopencv-ml-dev
+        - libopencv-ml2.4
+        - libopencv-objdetect-dev
+        - libopencv-objdetect2.4
+        - libopencv-ocl-dev
+        - libopencv-ocl2.4
+        - libopencv-photo-dev
+        - libopencv-photo2.4
+        - libopencv-stitching-dev
+        - libopencv-stitching2.4
+        - libopencv-superres-dev
+        - libopencv-superres2.4
+        - libopencv-ts-dev
+        - libopencv-ts2.4
+        - libopencv-video-dev
+        - libopencv-video2.4
+        - libopencv-videostab-dev
+        - libopencv-videostab2.4
+        - libopencv2.4-java
+        - libopencv2.4-jni
+        - opencv-data
+      when: opencv_check.rc == 1
+
+    - name: "Check if libfaac0 is from ppa2"
+      shell: |
+        apt-cache policy libfaac0 | grep Installed
+      register: libfaac0_check
+      changed_when: '"ppa2" in libfaac0_check.stdout'
+
+    - name: "Resolve conflict with ppa:mc3man/trusty-media"
+      apt: name={{item}} state=absent
+      with_items:
+        - libfaac0
+      when: '"ppa2" in libfaac0_check.stdout'
+
+    - name: "Install opencv prerequisite libraries"
+      apt: name={{item}}
+      with_items:
+        - build-essential
+        - cmake
+        - ffmpeg
+        - qtbase5-dev
+        - libgtkglext1-dev
+        - libvtk6-dev
+        - zlib1g-dev
+        - libjpeg-dev
+        - libwebp-dev
+        - libpng-dev
+        - libtiff5-dev
+        - libjasper-dev
+        - libopenexr-dev
+        - libgdal-dev
+        - libdc1394-22-dev
+        - libavcodec-dev
+        - libavformat-dev
+        - libswscale-dev
+        - libtheora-dev
+        - libvorbis-dev
+        - libxvidcore-dev
+        - libx264-dev
+        - libgstreamer1.0-dev
+        - libgstreamer-plugins-base1.0-dev
+        - libfaac-dev
+        - libmp3lame-dev
+        - yasm
+        - libopencore-amrnb-dev
+        - libopencore-amrwb-dev
+        - libv4l-dev
+        - libxine2-dev
+        - libtbb-dev
+        - libeigen3-dev
+        - python-tk
+        - python3-tk
+        - ant
+        - default-jdk
+        - doxygen
+
+    - name: "Erase temp build directory"
+      file: path=/tmp/ansible-opencv-build state=absent
+      when: opencv_check.rc == 1
+
+    - name: "Create temp build directory"
+      file: path=/tmp/ansible-opencv-build state=directory
+      when: opencv_check.rc == 1
+
+    - name: "Download opencv 3.3 sources"
+      unarchive:
+        src: https://github.com/opencv/opencv/archive/3.3.1.zip
+        dest: /tmp/ansible-opencv-build
+        remote_src: yes
+      when: opencv_check.rc == 1
+
+    - name: "Build and install opencv"
+      shell: |
+        mkdir build
+        cd build
+        cmake \
+            -D CMAKE_BUILD_TYPE=RELEASE \
+            -D CMAKE_INSTALL_PREFIX=/usr/local \
+            -D FORCE_VTK=ON \
+            -D WITH_TBB=ON \
+            -D WITH_V4L=ON \
+            -D WITH_QT=ON \
+            -D WITH_OPENGL=ON \
+            -D WITH_CUBLAS=ON \
+            -D CUDA_NVCC_FLAGS="-D_FORCE_INLINES --expt-relaxed-constexpr" \
+            -D WITH_GDAL=OFF \
+            -D WITH_XINE=ON \
+            -D WITH_GSTREAMER=ON \
+            -D BUILD_NEW_PYTHON_SUPPORT=ON \
+            -D BUILD_TESTS=OFF \
+            -D BUILD_PERF_TESTS=OFF \
+            -D BUILD_EXAMPLES=OFF ..
+        make clean
+        make -j12
+        checkinstall --default --backup=no --deldoc=yes \
+          --install=yes --pkgname=libopencv-dev --pkgversion='3.3.1'
+      args:
+        chdir: /tmp/ansible-opencv-build/opencv-3.3.1
+      register: opencv_build
+      failed_when: opencv_build.rc > 0
+      when: opencv_check.rc == 1
+      notify: run ldconfig
+
+    - name: "Verify installation"
+      stat: path=/usr/local/lib/libopencv_core.so.3.3.1
       register: libopencv_verify
       failed_when: not libopencv_verify.stat.exists
 
