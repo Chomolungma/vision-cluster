@@ -1,0 +1,4 @@
+---
+- src: andrewrothstein.bash
+- src: andrewrothstein.unarchive-deps
+- src: andrewrothstein.anaconda
