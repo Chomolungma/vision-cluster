@@ -35,7 +35,8 @@ fi
 # STEP 1: make sure nobody is using the machine.
 
 GPUSTATUS=$(ssh -x $SERVERNAME nvidia-smi)
-if [[ -z ${FORCE} && ! "${GPUSTATUS}" =~ "No running processes found" ]]
+if [[ -z ${FORCE} && ! "${GPUSTATUS}" =~ "No running processes found" \
+    && ! "${GPUSTATUS}" =~ "NVIDIA-SMI has failed" ]]
 then
   echo "${GPUSTATUS}"
   echo "${SERVERNAME} is busy. Not wiping."
@@ -43,7 +44,7 @@ then
 fi
 
 LOGINSTATUS=$(ssh -x $SERVERNAME who)
-if [ -z ${FORCE} && ! -z "${LOGINSTATUS}" ]
+if [[ -z ${FORCE} && ! -z "${LOGINSTATUS}" ]]
 then
   echo "${LOGINSTATUS}"
   echo "${SERVERNAME} has users logged in. Not wiping."
@@ -51,7 +52,7 @@ then
 fi
 
 PROCSTATUS=$(ssh -x $SERVERNAME ps -ef | egrep 'jupyter|matlab')
-if [ -z ${FORCE} && ! -z "${PROCSTATUS}" ]
+if [[ -z ${FORCE} && ! -z "${PROCSTATUS}" ]]
 then
   echo "${PROCSTATUS}"
   echo "${SERVERNAME} has users running interactive apps. Not wiping."
