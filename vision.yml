@@ -80,6 +80,7 @@
       shell: pidof systemd
       register: check_systemd
       failed_when: check_systemd.rc > 2
+      changed_when: cuda_check_deb.rc == 1
 
     - name: "Autostart glances webserver"
       copy:
@@ -109,88 +110,11 @@
         - libgflags-dev
         - libgoogle-glog-dev
         - liblmdb-dev
-    - name: "Add boost library."
-      apt: name=libboost-all-dev install_recommends=no
-
-# Different versions of google protobuf are not binary-compatible,
-# and different deep learning tools have different needs: while caffe
-# is ok with the old protobuf packaged with ubuntu, tensorflow and
-# andaconda want a very current protobuf.  So we upgrade to a recent
-# protobuf that is far ahead of ubuntu by building directly from
-# the google sources.
-- name: "Build google protobuf 3.2 from source"
-  hosts: gpu
-  become: yes
-  tasks:
-    - name: "Check if protobuf 3.2 is present"
-      command: dpkg-query -W libprotobuf12 libprotobuf-lite12 \
-        libprotoc12 libprotobuf-dev libprotoc-dev protobuf-compiler \
-      register: protobuf_check
-      failed_when: protobuf_check.rc > 1
-      changed_when: protobuf_check.rc == 1
-
-    # If the old protoc is not removed now, the old package will think it
-    # owns the new protoc and the new one will be deleted.
-    - name: "Remove old protobuf implementation"
-      apt: name={{item}} state=absent
-      with_items:
         - libprotobuf-dev
         - libprotoc-dev
         - protobuf-compiler
-      when: protobuf_check.rc == 1
-
-    - name: "Eraes temp build directory"
-      file: path=/tmp/ansible-proto-build state=absent
-      when: protobuf_check.rc == 1
-
-    - name: "Create temp build directory"
-      file: path=/tmp/ansible-proto-build state=directory
-      when: protobuf_check.rc == 1
-
-    - name: "Download protobuf 3.2 sources"
-      unarchive:
-        src: "https://github.com/google/protobuf/releases/download/v3.2.0/protobuf-cpp-3.2.0.tar.gz"
-        dest: /tmp/ansible-proto-build
-        remote_src: yes
-      when: protobuf_check.rc == 1
-
-    - name: "Build and install protobuf"
-      shell: |
-        ./configure && make clean && make -j8 && \
-        checkinstall --default --backup=no --deldoc=yes \
-          --install=yes --pkgname=libprotobuf-dev --pkgversion='3.2.0'
-      args:
-        chdir: /tmp/ansible-proto-build/protobuf-3.2.0
-      register: protobuf_build
-      failed_when: protobuf_build.rc > 0
-      when: protobuf_check.rc == 1
-
-    - name: "Run ldconfig"
-      command: ldconfig
-      when: protobuf_check.rc == 1
-
-    - name: "Verify protoc installation"
-      command: /usr/local/bin/protoc --version
-      register: protoc_test
-      failed_when: '"3.2.0" not in protoc_test.stdout'
-      when: protobuf_check.rc == 1
-
-    - name: "Copy protobuf dummy deb files"
-      copy:
-        dest: /tmp/ansible-proto-build/
-        src: files/protobuf/
-      when: protobuf_check.rc == 1
-
-    - name: "Install protobuf dummy deb files"
-      apt: deb={{item}}
-      with_items:
-        - "/tmp/ansible-proto-build/libprotobuf12_3.2.0-0~dummy_amd64.deb"
-        - "/tmp/ansible-proto-build/libprotobuf-lite12_3.2.0-0~dummy_amd64.deb"
-        - "/tmp/ansible-proto-build/libprotoc12_3.2.0-0~dummy_amd64.deb"
-        # - "/tmp/ansible-proto-build/libprotobuf-dev_3.2.0-0~dummy_amd64.deb"
-        - "/tmp/ansible-proto-build/libprotoc-dev_3.2.0-0~dummy_amd64.deb"
-        - "/tmp/ansible-proto-build/protobuf-compiler_3.2.0-0~dummy_amd64.deb"
-      when: protobuf_check.rc == 1
+    - name: "Add boost library."
+      apt: name=libboost-all-dev install_recommends=no
 
 - name: "Intel MKL library"
   hosts: gpu
