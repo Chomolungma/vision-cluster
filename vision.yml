@@ -80,7 +80,7 @@
       shell: pidof systemd
       register: check_systemd
       failed_when: check_systemd.rc > 2
-      changed_when: cuda_check_deb.rc == 1
+      changed_when: check_systemd.rc == 1
 
     - name: "Autostart glances webserver"
       copy:
@@ -384,7 +384,7 @@
   hosts: gpu
   become: true
   vars:
-    anaconda_version: 4.5.0
+    anaconda_version: 5.1.0
     anaconda_parent_dir: /opt/
     anaconda3_path: "/opt/Anaconda3-{{ anaconda_version }}-Linux-x86_64"
   pre_tasks:
