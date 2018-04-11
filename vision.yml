@@ -569,6 +569,7 @@
           --install=yes --pkgname=libopencv-dev --pkgversion='3.1.0'
       args:
         chdir: /tmp/ansible-opencv-build
+      warn: False
       register: opencv_build
       failed_when: opencv_build.rc > 0
       when: opencv_check.rc == 1
