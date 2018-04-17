@@ -116,6 +116,17 @@
     - name: "Add boost library."
       apt: name=libboost-all-dev install_recommends=no
 
+- name: "Update sox sound library"
+  hosts: gpu
+  become: yes
+  tasks:
+    - name: "Ensure sox is installed"
+      apt: name={{item}} state=present
+      with_items:
+        - sox
+        - libsox-dev
+        - libsox-fmt-all
+
 - name: "Intel MKL library"
   hosts: gpu
   become: yes
@@ -135,7 +146,9 @@
       apt: name={{item}}
       with_items:
         - "intel-mkl-2018.0-033"
-        - "intel-mkl-64bit-2018.1-038"
+        # For the future:
+        # - "intel-mkl-2018.1-038"
+        # - "intel-mkl-2018.2-046"
 
     - name: "Add MKL library to ld.so.d path"
       copy:
@@ -569,7 +582,7 @@
           --install=yes --pkgname=libopencv-dev --pkgversion='3.1.0'
       args:
         chdir: /tmp/ansible-opencv-build
-      warn: False
+        warn: False
       register: opencv_build
       failed_when: opencv_build.rc > 0
       when: opencv_check.rc == 1
