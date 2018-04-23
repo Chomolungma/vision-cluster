@@ -1,0 +1,135 @@
+#!/bin/bash
+
+MESSAGE_DIR="/var/run/user_motd.d"
+MY_MESSAGE="${MESSAGE_DIR}/message.${USER}.txt"
+EDITOR="${VISUAL:-${EDITOR:-vi}}"
+DAYS_TO_SHOW=2
+BOLD_FORMAT=YES
+
+if [ ! -d "${MESSAGE_DIR}" ]
+then
+    if [[ $EUID -eq 0 ]]
+    then
+        mkdir ${MESSAGE_DIR}
+    else
+        echo "For user motd, directory ${MESSAGE_DIR} needed"
+        exit 1
+    fi
+fi
+if [ $(stat -c %a "${MESSAGE_DIR}") != "777" ]
+then
+    if [[ $EUID -eq 0 ]]
+    then
+        chmod 777 ${MESSAGE_DIR}
+    else
+        echo "For user motd, ${MESSAGE_DIR} should have 777 permissions"
+        exit 1
+    fi
+fi
+
+POSITIONAL=()
+while [[ $# -gt 0 ]]
+do
+key="$1"
+case $key in
+    -m|--message)
+    shift # past argument
+    SET_MESSAGE=YES
+    MESSAGE="$@"
+    break
+    ;;
+    -e|--edit)
+    shift
+    EDIT_MESSAGE=YES
+    ;;
+    -d|--delete)
+    shift
+    DELETE_MESSAGE=YES
+    ;;
+    -?|-h|--help|*)
+    shift # past argument
+    echo "This utility leaves a message that is shown for $DAYS_TO_SHOW day(s)"
+    echo "when any user logs into this computer ($(hostname))."
+    echo "Use it to post your plans for this machine."
+    echo "  -m \"[message]\" to set your message of the day."
+    echo "  -e             to edit your message of the day."
+    echo "  -d             to delete your message of the day."
+    echo
+    exit 0
+    ;;
+esac
+done
+
+function agotime {
+  local T=$1
+  local D=$((T/60/60/24))
+  local H=$((T/60/60%24))
+  local M=$((T/60%60))
+  local S=$((T%60))
+  [[ $D == 1 ]] && printf 'yesterday' && return
+  [[ $D > 0 ]] && printf '%d days ago' $D && return
+  [[ $H == 1 ]] && printf '%d hour ago' $H && return
+  [[ $H > 0 ]] && printf '%d hours ago' $H && return
+  [[ $M == 1 ]] && printf '%d minute ago' $M && return
+  [[ $M > 0 ]] && printf '%d minutes ago' $M && return
+  [[ $S == 1 ]] && printf '%d second ago' $S && return
+  printf '%d seconds ago' $S
+}
+
+function showmessage {
+  FILEMOD=$(stat -c %Y $1)
+  AGE=$(( $(date +%s) - $FILEMOD))
+  # echo -n "$(agotime ${AGE}), $(stat -c '%U' $1) posted: "
+  echo -n "$(stat -c '%U' $1) posted ($(agotime ${AGE})): "
+  cat $1
+}
+
+# Set motd for user.
+if [ "${SET_MESSAGE}" ] && [ -z "${MESSAGE}" ]
+then
+    DELETE_MESSAGE=YES
+elif [ "${SET_MESSAGE}" ] && [ ! -z "${MESSAGE}" ]
+then
+    echo "${MESSAGE}" > "${MY_MESSAGE}"
+elif [ ${EDIT_MESSAGE} ]
+then
+    $EDITOR "${MY_MESSAGE}"
+    grep -q -v '[^[:space:]]' < "${MY_MESSAGE}" && rm -f "${MY_MESSAGE}" && \
+        echo "No message."
+fi
+
+# Delete motd for user.
+if [ "${DELETE_MESSAGE}" ]
+then
+    if [ -e "${MY_MESSAGE}" ]
+    then
+        echo "Deleting message from ${USER}."
+        rm "${MY_MESSAGE}"
+    else
+        echo "No message from ${USER}."
+    fi
+fi
+
+# Print motd from any user that are no older than 2 days old.
+find "${MESSAGE_DIR}" -mtime -${DAYS_TO_SHOW} -type f -exec ls -t {} + \
+    | while read M
+do
+    if [ -z "${HEADER_SHOWN}" ]
+    then
+        echo
+        echo "User motd messages for $(hostname) (using $(readlink -e $0))"
+        echo
+        if [ "${BOLD_FORMAT}" ]
+        then
+            echo -n -e "\033[1m"
+        fi
+        HEADER_SHOWN=YES
+    fi
+    showmessage "${M}"
+done
+if [ "${BOLD_FORMAT}" ]
+then
+    echo -n -e "\033[0m"
+fi
+echo
+

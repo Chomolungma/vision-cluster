@@ -95,6 +95,30 @@
     - name: "Update apt cache and do a full dist upgrade"
       apt: update_cache=yes upgrade=dist cache_valid_time=3600
 
+- name: "Install motd utility"
+  hosts: gpu
+  become: yes
+  tags: motd
+  tasks:
+    - name: "Copy motd to /usr/local/bin"
+      copy:
+        dest: /usr/local/bin/motd
+        src: files/motd/motd
+        owner: root
+        group: root
+        mode: 0755
+    - name: "Create user motd directory"
+      file:
+        path: /var/run/user_motd.d
+        owner: root
+        group: root
+        mode: 01777
+    - name: "Link motd to /usr/local/bin"
+      file:
+        src: /usr/local/bin/motd
+        dest: /etc/update-motd.d/50-user-motd
+        state: link
+
 - name: "Machine learning dependencies"
   hosts: gpu
   become: yes
@@ -826,6 +850,7 @@
         test -f /opt/caffe/bin/caffe.bin && \
         test "$(/opt/caffe/bin/caffe --version)" = "caffe version 1.0.0"
       register: caffe_verify
+      changed_when: caffe_verify.rc > 0
       failed_when: caffe_verify.rc > 0
 
   handlers:
