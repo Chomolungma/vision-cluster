@@ -12,17 +12,17 @@ then
     then
         mkdir ${MESSAGE_DIR}
     else
-        echo "For user motd, directory ${MESSAGE_DIR} needed"
+        echo "Directory ${MESSAGE_DIR} needed for user-set motd."
         exit 1
     fi
 fi
-if [ $(stat -c %a "${MESSAGE_DIR}") != "777" ]
+if [ $(stat -c %a "${MESSAGE_DIR}") != "1777" ]
 then
     if [[ $EUID -eq 0 ]]
     then
-        chmod 777 ${MESSAGE_DIR}
+        chmod 1777 ${MESSAGE_DIR}
     else
-        echo "For user motd, ${MESSAGE_DIR} should have 777 permissions"
+        echo "Directory ${MESSAGE_DIR} needs 1777 perms for user-set motd."
         exit 1
     fi
 fi

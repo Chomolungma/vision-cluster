@@ -112,6 +112,7 @@
         path: /var/run/user_motd.d
         owner: root
         group: root
+        state: directory
         mode: 01777
     - name: "Link motd to /usr/local/bin"
       file:
