@@ -94,8 +94,13 @@ then
 elif [ ${EDIT_MESSAGE} ]
 then
     $EDITOR "${MY_MESSAGE}"
-    grep -q -v '[^[:space:]]' < "${MY_MESSAGE}" && rm -f "${MY_MESSAGE}" && \
+    if grep -q '[^[:space:]]' "${MY_MESSAGE}"
+    then
+        echo 'Edited.'
+    else
+        rm -f "${MY_MESSAGE}"
         echo "No message."
+    fi
 fi
 
 # Delete motd for user.
