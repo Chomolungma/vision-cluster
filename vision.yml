@@ -70,6 +70,7 @@
         - lshw
         - gdisk
         - nano
+        - smartmontools
 
     - name: "Install glances"
       pip:
