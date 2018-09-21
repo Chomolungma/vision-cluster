@@ -425,7 +425,7 @@
   hosts: gpu
   become: true
   vars:
-    anaconda_version: 5.1.0
+    anaconda_version: 5.2.0
     anaconda_parent_dir: /opt/
     anaconda3_path: "/opt/Anaconda3-{{ anaconda_version }}-Linux-x86_64"
   pre_tasks:
