@@ -218,14 +218,10 @@
   become: yes
   tasks:
     - name: "Check if CUDA is present"
-      command: dpkg-query -W cuda
+      command: dpkg-query -W cuda-repo-ubuntu1604
       register: cuda_check_deb
       failed_when: cuda_check_deb.rc > 1
-      changed_when: '"9" not in cuda_check_deb.stdout'
-
-    - name: "Remove old cuda repo"
-      apt: name=cuda-repo-ubuntu1404 state=absent
-      when: '"9" not in cuda_check_deb.stdout'
+      changed_when: '"10" not in cuda_check_deb.stdout'
 
     - name: "Add nvidia apt-key"
       apt_key:
@@ -235,13 +231,13 @@
     - name: "Download CUDA repo deb"
       apt:
         deb: "https://developer.download.nvidia.com/compute/cuda/repos/\
-              ubuntu1604/x86_64/cuda-repo-ubuntu1604_9.1.85-1_amd64.deb"
-      when: '"9" not in cuda_check_deb.stdout'
+              ubuntu1604/x86_64/cuda-repo-ubuntu1604_10.0.130-1_amd64.deb"
+      when: '"10" not in cuda_check_deb.stdout'
 
     - name: "Update apt-get cache"
       apt: update_cache=yes
       ignore_errors: yes
-      when: '"9" not in cuda_check_deb.stdout'
+      when: '"10" not in cuda_check_deb.stdout'
 
     - name: "Install CUDA drivers"
       apt: name={{item}} state=present
