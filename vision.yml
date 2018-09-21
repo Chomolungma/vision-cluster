@@ -276,28 +276,41 @@
         - "/tmp/ansible-cudnn/libcudnn7-dev_7.0.1.13-1+cuda8.0_amd64.deb"
       when: cudnn_check_deb.rc == 1
 
-- name: "Nvidia CUDNN distribution"
+- name: "Nvidia CUDNN and NCCL libraries"
   hosts: xenial
   become: yes
   tasks:
-    - name: "Check if CUDNN is present"
-      command: dpkg-query -W libcudnn7-dev libcudnn7
-      register: cudnn_check_deb
-      failed_when: cudnn_check_deb.rc > 1
-      changed_when: cudnn_check_deb.rc == 1
+    - name: "Check if nvidia machine learning repo deb is present"
+      command: dpkg-query -W nvidia-machine-learning-repo-ubuntu1604
+      register: nvidia_ml_repo_check_deb
+      failed_when: nvidia_ml_repo_check_deb.rc > 1
+      changed_when: '"1" not in nvidia_ml_repo_check_deb.stdout'
 
-    - name: "Copy CUDNN deb files"
-      copy:
-        dest: /tmp/ansible-cudnn/
-        src: largefiles/cudnn/xenial/
-      when: cudnn_check_deb.rc == 1
+    - name: "Add nvidia apt-key"
+      apt_key:
+        url: "https://developer.download.nvidia.com/compute/machine-learning/\
+              repos/ubuntu1604/x86_64/7fa2af80.pub"
+      when: '"1" not in nvidia_ml_repo_check_deb.stdout'
 
-    - name: "Install CUDNN runtime deb files"
-      apt: deb={{item}}
+    - name: "Download nvidia machine learning repo deb"
+      apt:
+        deb: "https://developer.download.nvidia.com/compute/machine-learning/\
+              repos/ubuntu1604/x86_64/\
+              nvidia-machine-learning-repo-ubuntu1604_1.0.0-1_amd64.deb"
+      when: '"1" not in nvidia_ml_repo_check_deb.stdout'
+
+    - name: "Update apt-get cache"
+      apt: update_cache=yes
+      ignore_errors: yes
+      when: '"1" not in nvidia_ml_repo_check_deb.stdout'
+
+    - name: "Install cudnn and nccl"
+      apt: name={{item}} state=present
       with_items:
-        - "/tmp/ansible-cudnn/libcudnn7_7.1.2.21-1+cuda9.1_amd64.deb"
-        - "/tmp/ansible-cudnn/libcudnn7-dev_7.1.2.21-1+cuda9.1_amd64.deb"
-      when: cudnn_check_deb.rc == 1
+        - libnccl2
+        - libnccl-dev
+        - libcudnn7
+        - libcudnn7-dev
 
 - name: "python packages"
   hosts: gpu
