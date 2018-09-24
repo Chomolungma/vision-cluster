@@ -71,6 +71,7 @@
         - gdisk
         - nano
         - smartmontools
+        - jq
 
     - name: "Install glances"
       pip:
