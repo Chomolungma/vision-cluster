@@ -72,6 +72,7 @@
         - nano
         - smartmontools
         - jq
+        - aria2
 
     - name: "Install glances"
       pip:
