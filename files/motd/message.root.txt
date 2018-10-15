@@ -1,0 +1,6 @@
+GPU machines should be used for vision lab research (not homework).
+
+Feel free to use any idle machine for research, but be aware that some
+machines are assigned to specific lab members who may kill jobs and
+erase local disks.  Write code that saves checkpoints and can resume
+on a different machine if interrupted.

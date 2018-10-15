@@ -1,4 +1,7 @@
 #!/bin/bash
+# Allows users to post a temporary motd on this machine,
+# which stays visible for 2 days.  If root posts a motd,
+# it will stay indefinitely until deleted.
 
 MESSAGE_DIR="/var/run/user_motd.d"
 MY_MESSAGE="${MESSAGE_DIR}/message.${USER}.txt"
@@ -80,8 +83,13 @@ function showmessage {
   FILEMOD=$(stat -c %Y $1)
   AGE=$(( $(date +%s) - $FILEMOD))
   # echo -n "$(agotime ${AGE}), $(stat -c '%U' $1) posted: "
-  echo -n "$(stat -c '%U' $1) posted ($(agotime ${AGE})): "
-  cat $1
+  if [[ "$(stat -c '%U' $1)" == "root" ]]
+  then
+      cat $1
+  else
+      echo "$(stat -c '%U' $1) posted ($(agotime ${AGE})):"
+      cat $1
+  fi
 }
 
 # Set motd for user.
@@ -116,7 +124,8 @@ then
 fi
 
 # Print motd from any user that are no older than 2 days old.
-find "${MESSAGE_DIR}" -mtime -${DAYS_TO_SHOW} -type f -exec ls -t {} + \
+find "${MESSAGE_DIR}" \( -mtime -${DAYS_TO_SHOW} -o -uid 0 \) \
+    -type f -exec ls -t {} + \
     | while read M
 do
     if [ -z "${HEADER_SHOWN}" ]

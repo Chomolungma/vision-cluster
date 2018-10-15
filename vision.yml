@@ -117,6 +117,13 @@
         group: root
         state: directory
         mode: 01777
+    - name: "Copy vision cluster motd"
+      copy:
+        dest: /var/run/user_motd.d/message.root.txt
+        src: files/motd/message.root.txt
+        owner: root
+        group: root
+        mode: 0644
     - name: "Link motd to /usr/local/bin"
       file:
         src: /usr/local/bin/motd
