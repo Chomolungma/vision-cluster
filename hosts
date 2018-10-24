@@ -1,4 +1,5 @@
 [gpu]
+visiongpu03
 visiongpu04
 visiongpu05
 visiongpu06
@@ -37,6 +38,7 @@ visiongpu38
 visiongpu39
 
 [xenial]
+visiongpu03
 visiongpu04
 visiongpu05
 visiongpu06
