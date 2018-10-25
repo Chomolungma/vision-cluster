@@ -124,14 +124,14 @@
         mode: 0755
     - name: "Create user motd directory"
       file:
-        path: /var/run/user_motd.d
+        path: /var/local/user_motd.d
         owner: root
         group: root
         state: directory
         mode: 01777
     - name: "Copy vision cluster motd"
       copy:
-        dest: /var/run/user_motd.d/message.root.txt
+        dest: /var/local/user_motd.d/message.root.txt
         src: files/motd/message.root.txt
         owner: root
         group: root

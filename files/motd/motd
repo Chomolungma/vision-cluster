@@ -1,9 +1,10 @@
 #!/bin/bash
 # Allows users to post a temporary motd on this machine,
-# which stays visible for 2 days.  If root posts a motd,
+# which stays visible for 2 days.  If root posts a message,
 # it will stay indefinitely until deleted.
+# (author: David Bau)
 
-MESSAGE_DIR="/var/run/user_motd.d"
+MESSAGE_DIR="/var/local/user_motd.d"
 MY_MESSAGE="${MESSAGE_DIR}/message.${USER}.txt"
 EDITOR="${VISUAL:-${EDITOR:-vi}}"
 DAYS_TO_SHOW=2
