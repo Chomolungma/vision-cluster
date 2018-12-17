@@ -126,20 +126,20 @@ fi
 
 # Print motd from any user that are no older than 2 days old.
 find "${MESSAGE_DIR}" \( -mtime -${DAYS_TO_SHOW} -o -uid 0 \) \
-    -type f -exec ls -t {} + \
+    -type f -exec ls -tr {} + \
     | while read M
 do
     if [ -z "${HEADER_SHOWN}" ]
     then
         echo
         echo "User motd messages for $(hostname) (using $(readlink -e $0))"
-        echo
         if [ "${BOLD_FORMAT}" ]
         then
             echo -n -e "\033[1m"
         fi
         HEADER_SHOWN=YES
     fi
+    echo
     showmessage "${M}"
 done
 if [ "${BOLD_FORMAT}" ]
