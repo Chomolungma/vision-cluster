@@ -164,6 +164,25 @@
     - name: "Add boost library."
       apt: name=libboost-all-dev install_recommends=no
 
+- name: "Unity3d prerequisites"
+  hosts: gpu
+  become: yes
+  tasks:
+    - name: "Make sure we have libgtk, stdc++6, canberra, etc."
+      apt: name={{packages}}
+      vars:
+        packages:
+        - libgtk2.0-0
+        - libsoup2.4-1
+        - libarchive13
+        - libpng16-16
+        - libgconf-2-4
+        - lib32stdc++6
+        - libcanberra-gtk-module
+    - name: "Add boost library."
+      apt: name=libboost-all-dev install_recommends=no
+
+
 - name: "Update sox sound library"
   hosts: gpu
   become: yes
@@ -404,6 +423,7 @@
 - name: "Mongodb 3.6"
   hosts: xenial
   become: yes
+  tags: mongodb
   tasks:
     - name: "Add mongodb apt-key"
       apt_key:
@@ -422,6 +442,7 @@
 - name: "Yarn and Nodejs"
   hosts: gpu
   become: yes
+  tags: nodejs
   tasks:
     - name: "Add NodeSource apt-key"
       apt_key:
